@@ -7,11 +7,14 @@ import android.widget.Button
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 import io.reactivex.functions.BiFunction
+import io.reactivex.functions.Consumer
 import io.reactivex.internal.operators.flowable.FlowableBlockingSubscribe.subscribe
 import java.util.concurrent.atomic.AtomicInteger
 
-private val s ="Mian"
+private val s = "Mian"
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,17 +23,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         zipTest()
-        var button:Button = Button(this)
+        var button: Button = Button(this)
 
     }
 
     private fun zipTest() {
-        var observable : Observable<Int> = Observable.create(ObservableOnSubscribe {
-            @Override
-            fun subscribe(emitter: ObservableEmitter<Int>) {
+        var observable: Observable<Int> = Observable.create(object :ObservableOnSubscribe<Int>{
 
-                Log.d(s, "emit 1")
-                emitter.onNext(1)
+            override fun subscribe(emitter: ObservableEmitter<Int>?) {
+                 Log.d(s, "emit 1")
+                emitter!!.onNext(1)
                 Log.d(s, "emit 2")
                 emitter.onNext(2)
                 Log.d(s, "emit 3")
@@ -39,14 +41,27 @@ class MainActivity : AppCompatActivity() {
                 emitter.onNext(4)
                 Log.d(s, "emit complete1")
                 emitter.onComplete()
+
+
             }
         })
 
 
+        var observable2: Observable<String> = Observable.create(object :ObservableOnSubscribe<String>{
 
-        var observable2 : Observable<String> = Observable.create(ObservableOnSubscribe {
-            @Override
-            fun subscibe(emitter: ObservableEmitter<String>){
+            override fun subscribe(emitter: ObservableEmitter<String>?) {
+                Log.d(s, "emit A");
+                emitter!!.onNext("A");
+                Log.d(s, "emit B");
+                emitter.onNext("B");
+                Log.d(s, "emit C");
+                emitter.onNext("C");
+                Log.d(s, "emit complete2");
+                emitter.onComplete()
+
+            }
+
+             /*fun subscibe(emitter: ObservableEmitter<String>) {
                 Log.d(s, "emit A");
                 emitter.onNext("A");
                 Log.d(s, "emit B");
@@ -54,21 +69,39 @@ class MainActivity : AppCompatActivity() {
                 Log.d(s, "emit C");
                 emitter.onNext("C");
                 Log.d(s, "emit complete2");
-                emitter.onComplete();
+                emitter.onComplete()
 
 
+            }*/
+        })
+
+        Observable.zip(observable, observable2, object : BiFunction<Int, String, String> {
+            @Throws(Exception::class)
+            override fun apply(integer: Int?, s: String): String {
+                return integer!!.toString() + s
+            }
+        }).subscribe(object : Observer<String> {  //此处是一个匿名对象！
+            override fun onSubscribe(d: Disposable) {  //注意与java的注解写法不同！
+                Log.d(s, "onSubscribe")
+            }
+
+            override fun onNext(value: String) {
+                Log.d(s, "onNext: $value")
+            }
+
+            override fun onError(e: Throwable) {
+                Log.d(s, "onError")
+            }
+
+            override fun onComplete() {
+                Log.d(s, "onComplete")
             }
         })
 
-        Observable.zip(observable,observable2, BiFunction<Int,String,String>(){ i: Int, s: String ->
-            return@BiFunction i.toString()+s
-        }).subscribe(Observable<String>){
-
-        }
 
     }
 
 
-
-
 }
+
+
