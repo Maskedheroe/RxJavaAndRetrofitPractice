@@ -12,6 +12,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.functions.BiFunction
 import io.reactivex.functions.Consumer
 import io.reactivex.internal.operators.flowable.FlowableBlockingSubscribe.subscribe
+import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.atomic.AtomicInteger
 
 private val s = "Mian"
@@ -23,8 +24,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         zipTest()
-        var button: Button = Button(this)
-
     }
 
     private fun zipTest() {
@@ -44,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
 
             }
-        })
+        }).subscribeOn(Schedulers.io())
 
 
         var observable2: Observable<String> = Observable.create(object :ObservableOnSubscribe<String>{
@@ -61,27 +60,16 @@ class MainActivity : AppCompatActivity() {
 
             }
 
-             /*fun subscibe(emitter: ObservableEmitter<String>) {
-                Log.d(s, "emit A");
-                emitter.onNext("A");
-                Log.d(s, "emit B");
-                emitter.onNext("B");
-                Log.d(s, "emit C");
-                emitter.onNext("C");
-                Log.d(s, "emit complete2");
-                emitter.onComplete()
 
-
-            }*/
-        })
+        }).subscribeOn(Schedulers.io())
 
         Observable.zip(observable, observable2, object : BiFunction<Int, String, String> {
-            @Throws(Exception::class)
             override fun apply(integer: Int?, s: String): String {
                 return integer!!.toString() + s
             }
         }).subscribe(object : Observer<String> {  //此处是一个匿名对象！
-            override fun onSubscribe(d: Disposable) {  //注意与java的注解写法不同！
+            @Throws(Exception::class)//注意与java的注解写法不同！
+            override fun onSubscribe(d: Disposable) {
                 Log.d(s, "onSubscribe")
             }
 
